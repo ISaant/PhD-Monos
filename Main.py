@@ -87,7 +87,7 @@ for i in np.arange(178,179,1):
         alignMat_incorr.append(alineado.loc[alineado['correcto']==0])
         neurons_corr.append(neurons.loc[alineado['correcto']==1])
         neurons_incorr.append(neurons.loc[alineado['correcto']==0])
-    #RasterPlot(alignMat_corr,neurons_corr,Columns, eventOfInterest, colorMatrix, Dir[i][:-4])
+    RasterPlot2(alignMat_corr,neurons_corr,Columns, eventOfInterest, colorMatrix, Dir[i][:-4])
     if len(np.unique(alignMat_corr[0]['anguloRotacion']))<12:
         continue
     else:
@@ -106,10 +106,10 @@ for i in np.arange(178,179,1):
                 #                          frame_length,frame_step,hamming,nfilt,NFFT,
                 #                          num_ceps,sig_lift,filterCoeff))
                 
-                (Cwtmatr,freq,X,widths)=CWTAverage(np.array(MatValLfp),targets_corr,fs,
-                                            'morl',targets_corr,problems,10,100,8)
+                # (Cwtmatr,freq,X,widths)=CWTAverage(np.array(MatValLfp),targets_corr,fs,
+                #                             'morl',targets_corr,problems,10,100,8)
                 
-                pltCwt(Cwtmatr,X,targets_corr,problems,freq,Dir[i],Electrode)
+                # pltCwt(Cwtmatr,X,targets_corr,problems,freq,Dir[i],Electrode)
                 
                 # (Cwtmatr2,freq,X2)=CWT(alignMat_corr[2],Electrode,fs,'morl',
                                      # filterCoeff)

@@ -871,12 +871,15 @@ def firingrate(SpikeTimes, TimeSamples, *args):
         
         
         if FilterType == 'boxcar': #Counts spikes between -TimeConstant/2 and +TimeConstant2 of each time sample (i.e. it extends into the past and future) 
-            fRate  = (np.sum([(spkT>=(timesamples-TimeConstant/2))&(spkT<(timesamples+TimeConstant/2))],axis=1)/TimeConstant)
+            # fRate  = (np.sum([(spkT>=(timesamples-TimeConstant/2))&(spkT<(timesamples+TimeConstant/2))],axis=1)/TimeConstant)
+            fRate  = (np.sum([(spkT>=(timesamples-TimeConstant/2))&(spkT<(timesamples))],axis=1)/TimeConstant)
+
         elif FilterType == 'exponential':
             
             SelectSpikesUpTo = TimeConstant * 7.5; # Time window within which spike will contribute to the firing rate of each time sample.
             SpikesBeforeTimeSample=np.array([(spkT>(timesamples-SelectSpikesUpTo)) & (spkT<=timesamples)]).reshape(spkT.shape[0],spkT.shape[1])
-            DistanceToTimeSample = spkT - timesamples;
+            DistanceToTimeSample = spkT - timesamples; # Distnace is calculated such that when exp
+            #  is calculated, the further neurons contribute less
             DistanceToTimeSample = abs(np.multiply(SpikesBeforeTimeSample,DistanceToTimeSample));
             fRate = np.multiply(1/TimeConstant ,np.exp(-DistanceToTimeSample/TimeConstant));
             fRate[SpikesBeforeTimeSample==False]=0; # Remove those distances that we are not considering.
@@ -979,3 +982,99 @@ def RasterPlot(alignMat,neurons_corr,Columns, eventOfInterest, colorMatrix, Titl
             # plt.savefig('/home/isaac/Documents/Doctorado CIC/Victor/RasterPlot/'+Title+key, 
             #     facecolor='w', edgecolor='w')
             # plt.close()
+            
+# =============================================================================
+
+def RasterPlot2(alignMat,neurons_corr,Columns, eventOfInterest, colorMatrix, Title):
+# Necesitas valancear las clases ... pruebalo 
+    # alignMat=alignMat_corr
+    # colors=linear_gradient('#34ebe5','#344ceb',6)
+    # colors=linear_gradient('#eb4034','#ebdf34',6)
+    colors=linear_gradient('#ebdf34','#eb4034',6)
+    colorizq=np.array([colors['r'],colors['g'],colors['b']]).T/255
+    colors=linear_gradient('#34ebe5','#344ceb',6)
+    colorder=np.array([colors['r'],colors['g'],colors['b']]).T/255
+    colors=np.concatenate([colorizq,colorder])
+    #colors=['r','b']
+    Top=[4.5, 1.4, 2.5, 1]
+    Start=[0, -1, -1, -1]
+    samples=.03
+    
+    
+    
+    neuronsKeys=neurons_corr[0].keys()[:2]
+    plt.close('all')
+    # angRot=np.array(neurons_corr[2]['anguloRotacion'])
+    angRot=np.array(neurons_corr[2]['anguloRotacion'])
+    # angDer=np.array(angRot[angRot<0].index)
+    # angIzq=np.array(angRot[angRot>0].index)
+    # angulos=[angIzq,angDer]
+    # HowMany=[len(angIzq),len(angDer)]
+    angulos,HowMany=myUnique(angRot)
+    #Nota: agragar corr-incorr
+    
+    length_checker = np.vectorize(len)
+    
+    fRates=[]
+    
+    for key in neuronsKeys:
+        if key[-3:] != '255' and key[-1:] != '0':
+            fig, axs = plt.subplots(2, 1, gridspec_kw={'height_ratios': [2,1]}, figsize=(20,8))
+            plt.suptitle(Title+key)
+            Slide=0
+            for h in range(len(neurons_corr)):
+                TimeSamples=np.arange(Start[h],Top[h]+samples,samples)
+                
+            #for h in range(1):
+                #h=3
+                cont=0
+                cont2=0
+                # for ang in angulos:
+                for ang in angulos:
+                    # if abs(ang)<=.2:
+                    compactTrail=np.empty(1,)
+                    trial2plot=neurons_corr[h][key]
+                    trial2plot=trial2plot[neurons_corr[h]['anguloRotacion']==ang[0]]
+                    # trial2plot=trial2plot[ang]
+                    #trail2plot=trail2plot.reset_index()
+                    offsets = np.arange(0,len(trial2plot),1)+sum(HowMany[:cont])
+                    # offsets = np.arange(0,len(trial2plot),1)+len(ang)
+
+                    #offsets = np.array(trail2plot.index)
+                    slicedTrails=[]
+                    for trial in trial2plot:
+                        sliced=trial[(trial>=Start[h])&(trial<=Top[h])]+Slide
+                        slicedTrails.append(sliced)
+                        compactTrail=np.concatenate([compactTrail,sliced])
+                    # axs[0].eventplot(slicedTrails,colors=colors[cont],lineoffsets=offsets)
+                    if offsets !=[]:
+                        axs[0].eventplot(slicedTrails,color=colors[cont],lineoffsets=offsets)
+
+                    # eval('fRate'+str(cont)+"=firingrate(trial2plot,TimeSamples,'FilterType','exponential','TimeConstant', 0.5)")
+                    fRate=firingrate(trial2plot,TimeSamples,'FilterType','exponential','TimeConstant', 0.5)
+                    axs[1].plot(TimeSamples+Slide,np.mean(fRate,axis=0),color=colors[cont])
+                    #plt.eventplot(neuron2plot)
+                    # sns.kdeplot(compactTrail,
+                    #               ax=axs[1],
+                    #               color=RGB_to_hex(colors[cont]*255))
+                    
+                    # if compactTrail!=[]:
+                    #     sns.histplot(compactTrail, 
+                    #                ax=axs[1],color=colors[cont],
+                    #                fill=False, kde=True, binwidth=.05, common_norm=False)
+                    # cont2+=1
+
+                    cont+=1
+                for j in Columns[h]:
+                    axs[0].eventplot(alignMat[h][eventOfInterest[j]]+Slide,colors=colorMatrix[j],linewidths=3)
+                                    
+             
+                        
+                axs[1].axvline(x=0+Slide,color=colorMatrix[Columns[h][0]])
+                
+                
+                Slide+=Top[h]+1.5
+            plt.show()
+                # plt.savefig('/home/isaac/Documents/Doctorado CIC/Victor/RasterPlot/'+Title+key, 
+                #     facecolor='w', edgecolor='w')
+                # plt.close()

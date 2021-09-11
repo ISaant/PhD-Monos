@@ -38,6 +38,7 @@ def PlotCWT (Cwtmatr,X,targets,problems,freqs,File,Electrode):
                 axs[j].set_xlabel('Time')
                 axs[j].set_title(figTitles[i][j])
                 exec('axs['+str(j)+'].axvline(x=824,color=[1,0,0])')
+                axs[j].set_xlim(800,1500)
                 OriginalTicks=axs[j].get_yticks()
                 axs[j].set_yticks(np.linspace(0,len(freqs),len(OriginalTicks)))
                 axs[j].set_yticklabels(np.linspace(int(freqs[0]),int(freqs[-1]),len(OriginalTicks)).astype(int))
